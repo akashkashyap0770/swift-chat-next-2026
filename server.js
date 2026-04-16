@@ -1,71 +1,96 @@
+// ─────────────────────────────────────────────
 // server.js
-//
-// This file is the entry point for the server. Normally Next.js starts itself,
-// but we need to add Socket.io to the same server — so we start it manually here.
-//
-// HOW TO RUN:
-//   node server.js    (instead of next start / next dev)
-//   In package.json, set:  "dev": "node server.js"
-//
-// WHY global.io?
-//   We create io here, but the API routes (app/api/messages/route.js) also need it
-//   to emit messages. We can't import it normally because they run in separate contexts.
-//   Saving it as global.io makes it accessible from anywhere in the Node.js process.
+// Yeh file poora server start karti hai.
+// Next.js + Socket.io dono ek saath chalte hain.
+// Command: node server.js
+// ─────────────────────────────────────────────
 
+// Step 1: Zaroori cheezein import karo
+
+// 'http' module se basic HTTP server banate hain
 const { createServer } = require("http");
+
+// 'url' module se URL parse karte hain (query params etc.)
 const { parse } = require("url");
+
+// Next.js framework import karo
 const next = require("next");
+
+// Socket.io — real-time messaging ke liye
 const { Server } = require("socket.io");
 
+// ─────────────────────────────────────────────
+// Step 2: Settings decide karo
+// ─────────────────────────────────────────────
+
+// Agar NODE_ENV "production" hai to isDev = false
+// Development mein isDev = true (hot reload etc. milta hai)
 const isDev = process.env.NODE_ENV !== "production";
+
+// PORT: Render apna port deta hai, warna 3000 use karo locally
+// process.env.PORT = Render ka port (usually 10000)
+// || 3000 = agar PORT nahi mila to 3000 use karo (local development)
+const PORT = process.env.PORT || 3000;
+
+// Next.js app banao
 const app = next({ dev: isDev });
 
-// app.getRequestHandler() returns a function that Next.js uses to handle
-// incoming HTTP requests (pages, API routes, etc.)
+// Next.js ka request handler — yeh har HTTP request handle karta hai
+// (pages, API routes, images, etc. sab yahi handle karta hai)
 const handleRequest = app.getRequestHandler();
 
+// ─────────────────────────────────────────────
+// Step 3: Server start karo
+// app.prepare() Next.js ko ready karta hai (build load karta hai)
+// Jab ready ho jaye tab server start hota hai
+// ─────────────────────────────────────────────
 app.prepare().then(() => {
-  // Step 1: Create a plain HTTP server.
-  // Every request is passed to Next.js to handle normally.
+  // ── HTTP Server banao ──────────────────────────
+  // Har incoming request Next.js ko de do handle karne ke liye
   const httpServer = createServer((req, res) => {
     const parsedUrl = parse(req.url, true);
     handleRequest(req, res, parsedUrl);
   });
 
-  // Step 2: Attach Socket.io to the same HTTP server.
-  // Now both Next.js and Socket.io share port 3000.
+  // ── Socket.io same server pe lagao ────────────
+  // Ab ek hi port pe dono kaam karenge:
+  // - Next.js: normal pages aur API routes
+  // - Socket.io: real-time messages
   const io = new Server(httpServer, {
     cors: {
-      origin: "*", // allow any origin in development
+      origin: "*", // Kisi bhi domain se connection allow karo
       methods: ["GET", "POST"],
     },
   });
 
-  // Step 3: Handle socket events.
+  // ── Socket Events ─────────────────────────────
+  // Jab koi user browser mein app khole, socket connect hota hai
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.log("✅ Naya user connect hua, socket ID:", socket.id);
 
-    // When a user logs in, their browser emits "join" with their userId.
-    // We put them in a room named after their userId.
-    // Later, when someone sends them a private message, we do:
-    //   io.to(theirUserId).emit("new-message", ...)
-    // ...and only they receive it.
+    // Browser "join" event bhejta hai apna userId lekar
+    // Hum us user ko unke userId ke naam ke ek room mein daaldo
+    // Isse private messages sirf unhe milenge
     socket.on("join", (userId) => {
       socket.join(userId);
-      console.log(`User ${userId} is now in their room`);
+      console.log("👤 User " + userId + " apne room mein join ho gaya");
     });
 
+    // Jab user tab band kare ya logout kare
     socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
+      console.log("❌ User disconnect ho gaya, socket ID:", socket.id);
     });
   });
 
-  // Step 4: Save io on the global object so API routes can use it.
-  // Without this, app/api/messages/route.js has no way to emit messages.
+  // ── global.io kyun? ───────────────────────────
+  // API route (app/api/messages/route.js) ko bhi socket chahiye
+  // taaki message save hone ke baad turant sabko bhej sake.
+  // global = poore Node.js process mein accessible (jaise window browser mein)
+  // Isliye yahan save karte hain, API route wahan se padh leta hai.
   global.io = io;
 
-  // Step 5: Start listening on port 3000
-  httpServer.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+  // ── Server suno PORT pe ───────────────────────
+  httpServer.listen(PORT, () => {
+    console.log("🚀 Server chal raha hai: http://localhost:" + PORT);
   });
 });
