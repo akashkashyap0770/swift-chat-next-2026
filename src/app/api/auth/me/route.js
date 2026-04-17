@@ -6,7 +6,7 @@ import { verifyToken } from "@/lib/jwt";
 
 export async function GET() {
   try {
-    // ✅ FIX
+    // ✅ Already correct — uses await
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 

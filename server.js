@@ -6,12 +6,19 @@ const { Server } = require("socket.io");
 const isDev = process.env.NODE_ENV !== "production";
 const PORT = process.env.PORT || 3000;
 
-// Get the actual Render URL
+// ✅ FIX: No more hardcoded Render URL.
+// Set NEXT_PUBLIC_CLIENT_URL in Render's Environment Variables dashboard.
+// e.g. https://your-app-name.onrender.com
 const CLIENT_URL =
   process.env.NEXT_PUBLIC_CLIENT_URL ||
-  (isDev
-    ? "http://localhost:3000"
-    : "https://swift-chat-next-2026.onrender.com");
+  (isDev ? "http://localhost:3000" : null);
+
+if (!CLIENT_URL) {
+  throw new Error(
+    "NEXT_PUBLIC_CLIENT_URL environment variable is not set. " +
+      "Add it in your Render dashboard under Environment Variables.",
+  );
+}
 
 const app = next({ dev: isDev });
 const handleRequest = app.getRequestHandler();
@@ -24,31 +31,33 @@ app.prepare().then(() => {
 
   const io = new Server(httpServer, {
     cors: {
+      // ✅ FIX: Dynamic — reads from env, no stale hardcoded URL
       origin: CLIENT_URL,
       credentials: true,
       methods: ["GET", "POST"],
     },
     path: "/socket.io",
-    transports: ["polling", "websocket"], // Match client
+    transports: ["polling", "websocket"],
   });
 
   io.on("connection", (socket) => {
-    console.log("✅ Naya user connect hua, socket ID:", socket.id);
+    console.log("✅ New user connected, socket ID:", socket.id);
 
     socket.on("join", (userId) => {
       socket.join(userId);
-      console.log("👤 User " + userId + " apne room mein join ho gaya");
+      console.log(`👤 User ${userId} joined their room`);
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ User disconnect ho gaya, socket ID:", socket.id);
+      console.log("❌ User disconnected, socket ID:", socket.id);
     });
   });
 
+  // Make io available to API routes via global
   global.io = io;
 
   httpServer.listen(PORT, () => {
-    console.log(`🚀 Server chal raha hai on port ${PORT}`);
-    console.log(`📍 Client URL: ${CLIENT_URL}`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Allowing connections from: ${CLIENT_URL}`);
   });
 });

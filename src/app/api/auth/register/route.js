@@ -11,7 +11,6 @@ export async function POST(req) {
 
     const { name, email, password } = await req.json();
 
-    // Validate inputs
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "All fields are required" },
@@ -25,7 +24,6 @@ export async function POST(req) {
       );
     }
 
-    // Check if email is already used
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
@@ -34,32 +32,29 @@ export async function POST(req) {
       );
     }
 
-    // Hash the password before saving (never store plain text!)
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user in the database
     const user = await User.create({
       name,
-      username: name, // using name as username for simplicity
+      username: name,
       email,
       password: hashedPassword,
       isOnline: true,
     });
 
-    // Create a JWT token for this user
     const token = signToken({
       userId: user._id.toString(),
       name: user.name,
       email: user.email,
     });
 
-    // Save token in a secure HTTP-only cookie
+    // ✅ Already correct — secure uses production check
     const cookieStore = await cookies();
     cookieStore.set("token", token, {
-      httpOnly: true, // JS can't access this (protects against XSS)
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 

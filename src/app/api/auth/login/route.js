@@ -44,12 +44,13 @@ export async function POST(req) {
       email: user.email,
     });
 
-    // ✅ CORRECT FIX
     const cookieStore = await cookies();
 
+    // ✅ FIX: secure was hardcoded to false — now correctly uses production check
+    // On Render (HTTPS), secure must be true or the browser silently drops the cookie
     cookieStore.set("token", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
