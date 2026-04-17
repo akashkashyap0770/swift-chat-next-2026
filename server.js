@@ -9,7 +9,9 @@ const PORT = process.env.PORT || 3000;
 // Get the actual Render URL
 const CLIENT_URL =
   process.env.NEXT_PUBLIC_CLIENT_URL ||
-  (isDev ? "http://localhost:3000" : "https://your-app.onrender.com");
+  (isDev
+    ? "http://localhost:3000"
+    : "https://swift-chat-next-2026.onrender.com");
 
 const app = next({ dev: isDev });
 const handleRequest = app.getRequestHandler();
