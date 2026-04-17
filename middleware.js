@@ -5,23 +5,31 @@ export function middleware(request) {
   const token = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
-  // Public paths (no authentication needed)
+  // Public paths (no auth needed)
   const isPublicPath = pathname === "/login" || pathname === "/register";
 
-  // Auth API paths (don't require token for login/register)
+  // Auth API paths (don't require token)
   const isAuthApi =
     pathname === "/api/auth/login" || pathname === "/api/auth/register";
 
-  // Protected API paths (require token)
-  const isProtectedApi = pathname.startsWith("/api/") && !isAuthApi;
+  // Socket.io path (always allow)
+  const isSocketPath = pathname.includes("/socket.io");
+
+  // Protected API paths
+  const isProtectedApi =
+    pathname.startsWith("/api/") && !isAuthApi && !isSocketPath;
 
   // Protected pages
   const isProtectedPage = pathname === "/" || pathname.startsWith("/chat");
 
-  // Check if user is authenticated
   const user = token ? verifyToken(token) : null;
 
-  // Redirect logic for pages
+  // Allow socket connections always
+  if (isSocketPath) {
+    return NextResponse.next();
+  }
+
+  // Page redirects
   if (isProtectedPage && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -30,9 +38,12 @@ export function middleware(request) {
     return NextResponse.redirect(new URL("/chat", request.url));
   }
 
-  // API authentication
+  // API auth
   if (isProtectedApi && !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized - Please login" },
+      { status: 401 },
+    );
   }
 
   return NextResponse.next();

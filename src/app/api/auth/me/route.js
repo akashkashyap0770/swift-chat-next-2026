@@ -6,12 +6,13 @@ import { verifyToken } from "@/lib/jwt";
 
 export async function GET() {
   try {
-    // ✅ Already correct — uses await
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
+    console.log("🔍 Auth check - Token exists:", !!token); // Debug log
+
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "No token provided" }, { status: 401 });
     }
 
     const decoded = verifyToken(token);
@@ -21,12 +22,19 @@ export async function GET() {
     }
 
     await connectDB();
-
     const user = await User.findById(decoded.userId).select("-password");
 
-    return NextResponse.json(user);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    return NextResponse.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Auth me error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

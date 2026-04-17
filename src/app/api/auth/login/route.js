@@ -36,6 +36,7 @@ export async function POST(req) {
       );
     }
 
+    // Update online status
     await User.findByIdAndUpdate(user._id, { isOnline: true });
 
     const token = signToken({
@@ -46,14 +47,14 @@ export async function POST(req) {
 
     const cookieStore = await cookies();
 
-    // ✅ FIX: secure was hardcoded to false — now correctly uses production check
-    // On Render (HTTPS), secure must be true or the browser silently drops the cookie
+    // Production-ready cookie settings
     cookieStore.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production", // Important for HTTPS
+      sameSite: "lax", // or "none" if cross-site
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
+      // domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
     });
 
     return NextResponse.json({
@@ -61,7 +62,7 @@ export async function POST(req) {
       user: { _id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Login error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
