@@ -1,9 +1,5 @@
 "use client";
 
-// SocketContext.js
-// Socket = browser aur server ke beech ek open line
-// Jab server kuch bhejta hai, browser turant receive karta hai
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useAuth } from "./AuthContext";
@@ -15,40 +11,61 @@ export function SocketProvider({ children }) {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Login nahi hua to socket mat banao
-    if (!user) return;
+    if (!user) {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+      return;
+    }
 
-    const newSocket = io(window.location.origin, {
-      path: "/socket.io",
+    // Don't create multiple sockets
+    if (socket) return;
 
-      // ✅ FIX: polling pehle, websocket baad mein
-      // Render pe direct websocket fail hota hai
-      // polling se connect hoke phir websocket pe upgrade karta hai
-      transports: ["polling", "websocket"],
+    console.log("🔌 Connecting to socket...");
 
-      upgrade: true, // polling se websocket pe upgrade karne ki koshish karo
+    const newSocket = io({
+      path: "/api/socket.io", // Must match server path
+      transports: ["websocket", "polling"],
       reconnection: true,
-      reconnectionAttempts: 10, // zyada attempts
-      reconnectionDelay: 2000, // 2 second wait between attempts
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      withCredentials: true,
+      autoConnect: true,
     });
 
     newSocket.on("connect", () => {
-      console.log("✅ Socket connected:", newSocket.id);
+      console.log("✅ Socket connected successfully:", newSocket.id);
       newSocket.emit("join", user._id);
     });
 
     newSocket.on("connect_error", (error) => {
-      console.error("❌ Socket error:", error.message);
+      console.error("❌ Socket connection error:", error.message);
+      console.log("🔄 Attempting to reconnect...");
     });
 
     newSocket.on("disconnect", (reason) => {
       console.log("⚠️ Socket disconnected:", reason);
+      if (reason === "io server disconnect") {
+        // Reconnect if server disconnected
+        newSocket.connect();
+      }
+    });
+
+    newSocket.on("reconnect", (attemptNumber) => {
+      console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
+      newSocket.emit("join", user._id);
     });
 
     setSocket(newSocket);
 
     return () => {
-      newSocket.disconnect();
+      if (newSocket) {
+        newSocket.disconnect();
+        setSocket(null);
+      }
     };
   }, [user]);
 
@@ -58,5 +75,9 @@ export function SocketProvider({ children }) {
 }
 
 export function useSocket() {
-  return useContext(SocketContext);
+  const context = useContext(SocketContext);
+  if (!context) {
+    console.warn("useSocket must be used within a SocketProvider");
+  }
+  return context;
 }
