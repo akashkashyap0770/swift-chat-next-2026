@@ -1,4 +1,6 @@
-"use client";
+export const dynamic = "force-dynamic";
+
+("use client");
 
 // Registration page
 // User fills in name, email, password → account is created
@@ -24,9 +26,8 @@ export default function RegisterPage() {
   }, [user, router]);
 
   const handleRegister = async (e) => {
-    e.preventDefault(); // prevent page reload
+    e.preventDefault();
 
-    // Basic validation
     if (!name.trim() || !email.trim() || !password.trim()) {
       toast.error("All fields are required");
       return;
@@ -39,11 +40,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Send registration request to backend
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ FIX: browser ab cookie store karega
+        credentials: "include",
         body: JSON.stringify({ name, email, password }),
       });
 
@@ -54,7 +54,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Save user in context and go to chat
       login(data.user);
       toast.success("Account created! Welcome 🎉");
       router.push("/chat");
