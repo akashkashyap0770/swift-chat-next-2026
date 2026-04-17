@@ -1,6 +1,6 @@
-export const dynamic = "force-dynamic";
-
 "use client";
+
+export const dynamic = "force-dynamic";
 
 // Main chat page
 // Shows: Navbar on top, Sidebar on left, ChatWindow on right

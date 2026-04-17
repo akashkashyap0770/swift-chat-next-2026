@@ -1,6 +1,6 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-("use client");
+export const dynamic = "force-dynamic";
 
 // Registration page
 // User fills in name, email, password → account is created
