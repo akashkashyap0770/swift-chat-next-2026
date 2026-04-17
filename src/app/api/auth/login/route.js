@@ -18,8 +18,8 @@ export async function POST(req) {
       );
     }
 
-    // Find the user by email (include password field for comparison)
     const user = await User.findOne({ email }).select("+password");
+
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -27,8 +27,8 @@ export async function POST(req) {
       );
     }
 
-    // Compare the entered password with the hashed one in the DB
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -36,20 +36,18 @@ export async function POST(req) {
       );
     }
 
-    // Mark user as online
     await User.findByIdAndUpdate(user._id, { isOnline: true });
 
-    // Create and set JWT token in cookie
     const token = signToken({
       userId: user._id.toString(),
       name: user.name,
       email: user.email,
     });
 
-    const cookieStore = await cookies();
-    cookieStore.set("token", token, {
+    // ❌ FIX: no await here
+    cookies().set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
@@ -60,7 +58,7 @@ export async function POST(req) {
       user: { _id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
