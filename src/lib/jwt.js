@@ -1,3 +1,6 @@
+// This file should NOT be imported in middleware
+// Only use in API routes (Node.js runtime)
+
 import jwt from "jsonwebtoken";
 
 const SECRET = process.env.JWT_SECRET;

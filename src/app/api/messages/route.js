@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 // app/api/messages/route.js
 //
 // GET  /api/messages          → fetch all global chat messages

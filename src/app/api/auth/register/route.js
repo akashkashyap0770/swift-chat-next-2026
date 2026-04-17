@@ -1,3 +1,5 @@
+export const runtime = "nodejs";
+
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
