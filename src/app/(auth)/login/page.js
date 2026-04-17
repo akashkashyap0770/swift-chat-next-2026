@@ -33,6 +33,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ FIX: browser ab cookie store karega
         body: JSON.stringify({ email, password }),
       });
 

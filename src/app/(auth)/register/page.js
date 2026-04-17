@@ -43,6 +43,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ FIX: browser ab cookie store karega
         body: JSON.stringify({ name, email, password }),
       });
 
