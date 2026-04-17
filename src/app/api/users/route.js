@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/jwt";
+import jwt from "jsonwebtoken";
 import connectDB from "@/lib/db";
 import User from "@/models/user";
 
 export async function GET() {
   try {
-    const token = cookies().get("token")?.value;
+    // ✅ FIX
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = verifyToken(token);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     await connectDB();
 
@@ -23,6 +25,7 @@ export async function GET() {
 
     return NextResponse.json(users);
   } catch (error) {
+    console.error("Get users error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

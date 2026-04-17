@@ -1,36 +1,41 @@
 "use client";
 
-// SideBar.jsx
-// Shows all registered users in the left panel
-// FIX: Removed the setInterval — users list only fetches ONCE on load
-// No more repeated /api/users calls every 10 seconds
-
 import { useEffect, useState } from "react";
 
 export default function SideBar({ selectedUser, onSelectUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch users ONCE when the sidebar first loads
-  // No interval — user list doesn't need to refresh constantly
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("/api/users");
-        if (!res.ok) return;
+        const res = await fetch("/api/users", {
+          method: "GET",
+          credentials: "include", // ✅ IMPORTANT (cookie bhejne ke liye)
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          console.error("❌ Failed to fetch users:", err);
+          return;
+        }
+
         const data = await res.json();
+
+        console.log("✅ Users:", data); // debug
+
         if (Array.isArray(data)) {
           setUsers(data);
         }
       } catch (error) {
-        // silently ignore — sidebar still renders
+        console.error("❌ Fetch error:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUsers(); // runs only once — no setInterval
-  }, []); // empty [] = only runs when component first mounts
+    fetchUsers();
+  }, []);
 
   return (
     <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
@@ -42,7 +47,7 @@ export default function SideBar({ selectedUser, onSelectUser }) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Global Chat option */}
+        {/* Global Chat */}
         <div
           onClick={() => onSelectUser(null)}
           className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-800 transition ${
@@ -60,14 +65,14 @@ export default function SideBar({ selectedUser, onSelectUser }) {
           </div>
         </div>
 
-        {/* Section label */}
+        {/* Label */}
         <div className="px-4 py-2">
           <p className="text-gray-600 text-xs uppercase tracking-wider">
             Direct Messages
           </p>
         </div>
 
-        {/* User list */}
+        {/* Users */}
         {loading ? (
           <p className="px-4 py-3 text-gray-500 text-sm">Loading users...</p>
         ) : users.length === 0 ? (
@@ -83,21 +88,22 @@ export default function SideBar({ selectedUser, onSelectUser }) {
                   : ""
               }`}
             >
-              {/* Avatar with online dot */}
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white font-bold text-sm">
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
+
                 {user.isOnline && (
                   <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
                 )}
               </div>
 
-              {/* Name and status */}
               <div>
                 <p className="text-white text-sm font-medium">{user.name}</p>
                 <p
-                  className={`text-xs ${user.isOnline ? "text-green-400" : "text-gray-500"}`}
+                  className={`text-xs ${
+                    user.isOnline ? "text-green-400" : "text-gray-500"
+                  }`}
                 >
                   {user.isOnline ? "Online" : "Offline"}
                 </p>

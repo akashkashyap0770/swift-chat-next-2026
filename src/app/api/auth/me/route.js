@@ -6,7 +6,9 @@ import { verifyToken } from "@/lib/jwt";
 
 export async function GET() {
   try {
-    const token = cookies().get("token")?.value;
+    // ✅ FIX
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,6 +26,7 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

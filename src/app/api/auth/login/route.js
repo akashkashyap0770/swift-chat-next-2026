@@ -44,8 +44,10 @@ export async function POST(req) {
       email: user.email,
     });
 
-    // ❌ FIX: no await here
-    cookies().set("token", token, {
+    // ✅ CORRECT FIX
+    const cookieStore = await cookies();
+
+    cookieStore.set("token", token, {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
