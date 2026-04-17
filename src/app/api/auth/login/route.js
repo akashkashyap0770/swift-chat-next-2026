@@ -45,22 +45,24 @@ export async function POST(req) {
       email: user.email,
     });
 
-    const cookieStore = await cookies();
-
-    // Production-ready cookie settings
-    cookieStore.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Important for HTTPS
-      sameSite: "lax", // or "none" if cross-site
-      maxAge: 7 * 24 * 60 * 60,
-      path: "/",
-      // domain: process.env.NODE_ENV === "production" ? ".onrender.com" : undefined,
-    });
-
-    return NextResponse.json({
+    // Create response with cookie
+    const response = NextResponse.json({
       message: "Login successful",
       user: { _id: user._id, name: user.name, email: user.email },
     });
+
+    // Set cookie on the response
+    response.cookies.set({
+      name: "token",
+      value: token,
+      httpOnly: true,
+      secure: true, // Always true for HTTPS (Render uses HTTPS)
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

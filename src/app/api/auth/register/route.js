@@ -48,20 +48,23 @@ export async function POST(req) {
       email: user.email,
     });
 
-    // ✅ Already correct — secure uses production check
-    const cookieStore = await cookies();
-    cookieStore.set("token", token, {
+    // Create response with cookie
+    const response = NextResponse.json({
+      message: "Registered successfully",
+      user: { _id: user._id, name: user.name, email: user.email },
+    });
+
+    response.cookies.set({
+      name: "token",
+      value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
-    return NextResponse.json({
-      message: "Registered successfully",
-      user: { _id: user._id, name: user.name, email: user.email },
-    });
+    return response;
   } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
