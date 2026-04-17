@@ -1,11 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-// Registration page
-// User fills in name, email, password → account is created
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -18,12 +13,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { login, user } = useAuth();
-
-  // If already logged in, go to chat
-  useEffect(() => {
-    if (user) router.push("/chat");
-  }, [user, router]);
+  const { login } = useAuth();
 
   const handleRegister = async (e) => {
     e.preventDefault();

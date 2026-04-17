@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -14,12 +12,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { login, user } = useAuth();
-
-  // If already logged in, go to chat
-  useEffect(() => {
-    if (user) router.push("/chat");
-  }, [user, router]);
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();

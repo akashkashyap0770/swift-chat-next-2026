@@ -1,21 +1,29 @@
-// This page just redirects users to the right place:
-// - Not logged in? → Go to /login
-// - Logged in? → Go to /chat
+"use client";
 
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/jwt";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+export default function Home() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-  // Check if the token is valid
-  const user = token ? verifyToken(token) : null;
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        router.push("/chat");
+      } else {
+        router.push("/login");
+      }
+    }
+  }, [user, loading, router]);
 
-  if (!user) {
-    redirect("/login");
-  } else {
-    redirect("/chat");
-  }
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    </div>
+  );
 }
