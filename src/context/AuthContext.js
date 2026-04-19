@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
   async function logout() {
     try {
       await fetch("/api/auth/logout", {
-        method: "POST",
+        method: "DELETE",
         credentials: "include",
       });
     } catch (error) {
